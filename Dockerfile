@@ -17,7 +17,7 @@ RUN export ORACLE_HOME=/opt/instantclient
 RUN apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 16126D3A3E5C1192
 RUN apt-get update -qq
 RUN apt-get -qq remove postgis
-RUN apt-get update && apt-get install -y --fix-missing --no-install-recommends build-essential ca-certificates curl gfortran git libarmadillo-dev libarpack2-dev libflann-dev libhdf5-serial-dev liblapack-dev libsuperlu3-dev libtiff4-dev openssh-client python-numpy python-software-properties software-properties-common wget && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --fix-missing --no-install-recommends build-essential ca-certificates curl gfortran git libaio1 libarmadillo-dev libarpack2-dev libflann-dev libhdf5-serial-dev liblapack-dev libsuperlu3-dev libtiff4-dev openssh-client python-numpy python-software-properties software-properties-common wget && rm -rf /var/lib/apt/lists/*
 RUN add-apt-repository ppa:ubuntugis/ubuntugis-unstable -y
 RUN add-apt-repository ppa:ubuntu-toolchain-r/test -y
 RUN add-apt-repository ppa:boost-latest/ppa -y
