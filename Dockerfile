@@ -29,6 +29,6 @@ RUN git --version   && cmake --version  && gcc --version
 RUN cd /opt
 RUN git clone https://github.com/LASzip/LASzip  && cd LASzip  && mkdir build  && cd build && cmake -DCMAKE_INSTALL_PREFIX=/usr ..  && make && make install
 RUN git clone https://github.com/hobu/nitro && cd nitro && mkdir build  && cd build && cmake -DCMAKE_INSTALL_PREFIX=/usr ..  && make && make install
-RUN git clone https://github.com/pdal/pdal && cd pdal && git checkout ${PDAL_VERSION} && mkdir build  && cd build && cmake -DCMAKE_INSTALL_PREFIX=/usr -DBUILD_PLUGIN_OCI=on -DBUILD_PLUGIN_NITF=on -DBUILD_PLUGIN_P2G=on -DBUILD_PLUGIN_PCL=on -DBUILD_PLUGIN_PYTHON=on -DBUILD_PLUGIN_HEXBIN=on -DBUILD_PLUGIN_ATTRIBUTE=on -DBUILD_PLUGIN_ICEBRIDGE -DCMAKE_BUILD_TYPE=Release -DWITH_GEOTIFF=on -DWITH_LASZIP=on -DWITH_LAZPERF=on  ..  && make && make install
+RUN git clone https://github.com/pdal/pdal && cd pdal && git checkout ${PDAL_VERSION} && mkdir build  && cd build && cmake -DCMAKE_INSTALL_PREFIX=/usr -DBUILD_PLUGIN_OCI=on -DBUILD_PLUGIN_NITF=on -DBUILD_PLUGIN_P2G=on -DBUILD_PLUGIN_PCL=on -DBUILD_PLUGIN_PYTHON=on -DBUILD_PLUGIN_HEXBIN=on -DBUILD_PLUGIN_ATTRIBUTE=on -DBUILD_PLUGIN_ICEBRIDGE=on -DCMAKE_BUILD_TYPE=Release -DWITH_GEOTIFF=on -DWITH_LASZIP=on -DWITH_LAZPERF=on  ..  && make && make install
 
 
