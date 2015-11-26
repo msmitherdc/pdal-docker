@@ -11,6 +11,7 @@ CMD ["/bin/bash"]
 MAINTAINER Michael Smith [michael.smith@usace.army.mil]
 COPY instantclient_12_1 /opt/instantclient/
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/opt/instantclient/
+ARG PDAL_VERSION 
 ENV ORACLE_HOME /opt/instantclient
 RUN export
 RUN export ORACLE_HOME=/opt/instantclient
