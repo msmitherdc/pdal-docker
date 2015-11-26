@@ -22,7 +22,7 @@ RUN add-apt-repository ppa:ubuntugis/ubuntugis-unstable -y
 RUN add-apt-repository ppa:ubuntu-toolchain-r/test -y
 RUN add-apt-repository ppa:boost-latest/ppa -y
 RUN add-apt-repository ppa:smspillaz/cmake-2.8.12 -y
-RUN add-apt-repository pa:pdal/travis -y
+RUN add-apt-repository ppa:pdal/travis -y
 RUN apt-get update && apt-get install -y --fix-missing --no-install-recommends g++-4.8 libboost-filesystem1.55-dev libboost-iostreams1.55-dev libboost-program-options1.55-dev libboost-system1.55-dev libboost-thread1.55-dev cmake libgdal1h libgdal-dev libgeos++-dev libproj-dev libgeotiff-dev libxml2-dev hexboundary laz-perf pcl points2grid && rm -rf /var/lib/apt/lists/*
 RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 50
 RUN git --version   && cmake --version  && gcc --version
