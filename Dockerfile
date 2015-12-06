@@ -11,7 +11,7 @@ MAINTAINER Michael Smith [michael.smith@usace.army.mil]
 ENV CC clang
 ENV CXX clang++
 
-CMD ["/bin/bash"]
+RUN apt-get update && apt-get install -y --fix-missing --no-install-recommends libaio1  && rm -rf /var/lib/apt/lists/*
 COPY instantclient_12_1 /opt/instantclient/
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/opt/instantclient/
 ARG PDAL_VERSION 
