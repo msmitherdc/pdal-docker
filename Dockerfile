@@ -39,7 +39,7 @@ RUN git clone https://github.com/pdal/pdal \
       -DWITH_LASZIP=on \
       -DWITH_LAZPERF=on  \
       ..  \
-      && make -n`nprocs` \
+      && make  \
       && make install
 
 
