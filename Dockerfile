@@ -8,6 +8,9 @@
 FROM pdal/dependencies:latest
 MAINTAINER Michael Smith [michael.smith@usace.army.mil]
 
+ENV CC clang
+ENV CXX clang++
+
 CMD ["/bin/bash"]
 COPY instantclient_12_1 /opt/instantclient/
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/opt/instantclient/
@@ -21,7 +24,6 @@ RUN git clone https://github.com/pdal/pdal \
     && cd build \
     && cmake \
       -DCMAKE_INSTALL_PREFIX=/usr \
-      -DBUILD_PLUGIN_GREYHOUND=ON \
       -DBUILD_PLUGIN_SQLITE=ON \
       -DBUILD_PLUGIN_OCI=on \
       -DBUILD_PLUGIN_NITF=on \
