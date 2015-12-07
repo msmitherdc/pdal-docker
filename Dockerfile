@@ -11,10 +11,16 @@ MAINTAINER Michael Smith [michael.smith@usace.army.mil]
 ENV CC clang
 ENV CXX clang++
 
+ARG PDAL_VERSION 
+#Setup user
+ARG UID
+ARG GID 
+RUN adduser --no-create-home --disabled-login pdaluser --uid $UID --gid $GID
+
 RUN apt-get update && apt-get install -y --fix-missing --no-install-recommends libaio1  && rm -rf /var/lib/apt/lists/*
 COPY instantclient_12_1 /opt/instantclient/
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/opt/instantclient/
-ARG PDAL_VERSION 
+
 ENV ORACLE_HOME /opt/instantclient
 RUN export ORACLE_HOME=/opt/instantclient
 RUN git clone https://github.com/pdal/pdal \
@@ -42,4 +48,5 @@ RUN git clone https://github.com/pdal/pdal \
       && make  \
       && make install
 
+USER pdaluser
 
