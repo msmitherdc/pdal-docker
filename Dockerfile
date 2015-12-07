@@ -14,7 +14,8 @@ ENV CXX clang++
 ARG PDAL_VERSION 
 #Setup user
 ARG UID
-ARG GID 
+ARG GID
+RUN addgroup --gid $GID pdalgroup
 RUN adduser --no-create-home --disabled-login pdaluser --uid $UID --gid $GID
 
 RUN apt-get update && apt-get install -y --fix-missing --no-install-recommends libaio1  && rm -rf /var/lib/apt/lists/*
