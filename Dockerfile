@@ -52,7 +52,7 @@ RUN git clone https://github.com/pdal/pdal \
 
 COPY mkl.zip /opt/.
 RUN unzip /opt/mkl.zip
-ENV geolib GeographicLib-1.35
+ENV GEOLIB GeographicLib-1.35
 RUN cd /opt \
     && wget http://sf.net/projects/geographiclib/files/distrib/${GEOLIB}.tar.gz  \
     && tar -xzf ${GEOLIB}.tar.gz  \
@@ -66,8 +66,8 @@ RUN cd /opt \
     && make \
     && make install  
 
+COPY sarnoff /opt/sarnoff
 RUN cd /opt \
-    && git clone https://github.com/CRREL/sarnoff.git \
     && cd sarnoff \
     && mkdir build \
     && cd build \
