@@ -17,9 +17,8 @@ ARG UID
 ARG GID
 RUN addgroup --gid $GID pdalgroup
 RUN adduser --no-create-home --disabled-login pdaluser --gecos "" --uid $UID --gid $GID
-RUN adduser --no-create-home --disabled-login pdaluser --gecos "" --uid $UID --gid $GID
 
-RUN apt-get update && apt-get install -y --fix-missing --no-install-recommends libaio1  && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --fix-missing --no-install-recommends libaio1 unzip  && rm -rf /var/lib/apt/lists/*
 COPY instantclient_12_1 /opt/instantclient/
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/opt/instantclient/
 
@@ -51,7 +50,8 @@ RUN git clone https://github.com/pdal/pdal \
       && make  \
       && make install
 
-COPY mkl /opt/mkl
+COPY mkl.zip /opt/.
+RUN unzip /opt/mkl.zip
 ENV geolib GeographicLib-1.35
 RUN cd /opt \
     && wget http://sf.net/projects/geographiclib/files/distrib/${GEOLIB}.tar.gz  \
