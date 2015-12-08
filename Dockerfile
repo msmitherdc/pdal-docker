@@ -51,8 +51,8 @@ RUN git clone https://github.com/pdal/pdal \
       && make install
 
 COPY mkl.zip /opt/.
-RUN unzip /opt/mkl.zip
-ENV GEOLIB GeographicLib-1.35
+RUN unzip /opt/mkl.zip -d /opt
+ENV GEOLIB GeographicLib-1.45
 RUN cd /opt \
     && wget http://sf.net/projects/geographiclib/files/distrib/${GEOLIB}.tar.gz  \
     && tar -xzf ${GEOLIB}.tar.gz  \
