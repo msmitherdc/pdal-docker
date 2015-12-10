@@ -33,19 +33,19 @@ RUN git clone https://github.com/pdal/pdal \
     && cmake \
       -DCMAKE_INSTALL_PREFIX=/usr \
       -DBUILD_PLUGIN_SQLITE=ON \
-      -DBUILD_PLUGIN_OCI=on \
-      -DBUILD_PLUGIN_NITF=on \
-      -DBUILD_PLUGIN_P2G=on \
-      -DBUILD_PLUGIN_PCL=on \
-      -DBUILD_PLUGIN_PYTHON=on \
-      -DBUILD_PLUGIN_HEXBIN=on \
-      -DBUILD_PLUGIN_ATTRIBUTE=on \
-      -DBUILD_PLUGIN_ICEBRIDGE=on \
+      -DBUILD_PLUGIN_OCI=ON \
+      -DBUILD_PLUGIN_NITF=ON \
+      -DBUILD_PLUGIN_P2G=ON \
+      -DBUILD_PLUGIN_PCL=ON \
+      -DBUILD_PLUGIN_PYTHON=ON \
+      -DBUILD_PLUGIN_HEXBIN=ON \
+      -DBUILD_PLUGIN_ATTRIBUTE=ON \
+      -DBUILD_PLUGIN_ICEBRIDGE=ON \
       -DCMAKE_BUILD_TYPE=Release \
-      -DWITH_GEOTIFF=on \
+      -DWITH_GEOTIFF=ON \
       -DWITH_APPS=ON \
-      -DWITH_LASZIP=on \
-      -DWITH_LAZPERF=on  \
+      -DWITH_LASZIP=ON \
+      -DWITH_LAZPERF=ON  \
       ..  \
       && make  \
       && make install
@@ -91,5 +91,7 @@ RUN cd /opt \
       .. \ 
     && make \
     && cp pdal-bareearth/libpdal_plugin_filter_bareearthsri.so /usr/lib/.
+    
+RUN rm -rf laszip laz-perf points2grid pcl nitro hexer 3.2.7.tar.gz eigen-eigen-b30b87236a1b  /opt/mkl /opt/${GEOLIB}*
 
 USER pdaluser   
