@@ -1,7 +1,7 @@
 # grid-docker/pdal
 #
 # This creates an Ubuntu derived base image that installs the latest PDAL
-# git checkout 
+# git checkout
 #
 
 # pdal/dependencies
@@ -11,7 +11,7 @@ MAINTAINER Michael Smith [michael.smith@usace.army.mil]
 ENV CC clang
 ENV CXX clang++
 
-ARG PDAL_VERSION 
+ARG PDAL_VERSION
 #Setup user
 ARG UID
 ARG GID
@@ -64,7 +64,7 @@ RUN cd /opt \
       -DCMAKE_BUILD_TYPE=Release \
       .. \
     && make \
-    && make install  
+    && make install
 
 COPY sarnoff /opt/sarnoff
 RUN cd /opt \
@@ -88,10 +88,60 @@ RUN cd /opt \
       -DMKL_SEQUENTIAL_LIBRARY="/opt/mkl/lib/intel64/libmkl_sequential.a" \
       -DPDAL_INCLUDE_DIR="/usr/include" \
       -DPDAL_LIBRARY="/usr/lib/libpdalcpp.so" \
-      .. \ 
+      .. \
     && make \
     && cp pdal-bareearth/libpdal_plugin_filter_bareearthsri.so /usr/lib/.
-    
-RUN rm -rf laszip laz-perf points2grid pcl nitro hexer 3.2.7.tar.gz eigen-eigen-b30b87236a1b  /opt/mkl /opt/${GEOLIB}*
 
-USER pdaluser   
+RUN cd /opt \
+  && git clone https://github.com/libharu/libharu \
+  && cd libharu \
+  && git checkout RELEASE_2_3_0 \
+  && mkdir build \
+  && cd build \
+  && cmake \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    .. \
+  && make \
+  && make install
+
+RUN cd /opt \
+  && git clone https://github.com/PDAL/PRC \
+  && cd PRC \
+  && mkdir build \
+  && cd build \
+  && cmake \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DPDAL_DIR=/usr/lib/pdal/cmake \
+    .. \
+  && make \
+  && make install
+
+RUN cd /opt \
+  && git clone https://github.com/CRREL/LASread \
+  && cd LASread \
+  && make
+
+RUN cd /opt \
+  && git clone https://github.com/CRREL/lasvalidate \
+  && cd lasvalidate \
+  && make \
+  && cp bin/lasvalidate /usr/bin/
+
+RUN curl -L https://raw.githubusercontent.com/dockito/vault/master/ONVAULT > /usr/local/bin/ONVAULT && \
+    chmod +x /usr/local/bin/ONVAULT
+
+ENV VAULT_URI="172.17.0.1:14242"
+
+RUN cd /opt \
+  && ONVAULT git clone git@github.com:CRREL/LAStools.git  \
+  && cd LAStools \
+  && cmake \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    . \
+  && make \
+  && make install \
+  && cp bin/* /usr/bin
+
+RUN rm -rf laszip laz-perf points2grid pcl nitro hexer 3.2.7.tar.gz eigen-eigen-b30b87236a1b
+
+USER pdaluser
