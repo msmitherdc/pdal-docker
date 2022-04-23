@@ -1,147 +1,78 @@
-# grid-docker/pdal
-#
-# This creates an Ubuntu derived base image that installs the latest PDAL
-# git checkout
-#
-
-# pdal/dependencies
-FROM pdal/dependencies:latest
 MAINTAINER Michael Smith [michael.smith@usace.army.mil]
+FROM continuumio/miniconda3  as build
 
-ENV CC clang
-ENV CXX clang++
+RUN apt-get update --fix-missing && \
+    apt-get install -y \
+        wget unzip bzip2 ca-certificates sudo curl git  \
+        vim parallel time && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+SHELL ["/bin/bash", "-c"]
 
-ARG PDAL_VERSION
-#Setup user
-ARG UID
+
+ENV BASH_ENV ~/.bashrc
+SHELL ["/bin/bash", "-c"]
+ENV PATH /opt/conda/bin:$PATH
+
+ARG GDAL_VERSION
+ARG PYTHON_VERSION
+
+# Uncomment for oracle / mrsid plugins
+#COPY gdalplugins-${GDAL_VERSION}-h3fd9d12_1.tar.bz2 instantclient-19.8.0.0.0-3.tar.bz2 mrsid-9.5.4.4709-2.tar.bz2 /tmp/
+
+RUN  conda create --yes --quiet --name gdal  && \
+     conda config --add channels conda-forge && \
+     conda install  --yes boto3 conda-pack && \
+     conda update --all && \
+     #conda install -n gdal /tmp/gdalplugins-${GDAL_VERSION}-h3fd9d12_1.tar.bz2  /tmp/instantclient-19.8.0.0.0-3.tar.bz2 /tmp/mrsid-9.5.4.4709-2.tar.bz2 && \
+     conda install -n gdal --yes  libaio gdal=${GDAL_VERSION}  && \
+     conda clean -afy
+
+RUN conda-pack -n gdal -o  /tmp/env.tar --ignore-missing-files && \
+     mkdir /venv && cd /venv && tar xf /tmp/env.tar && \
+     rm /tmp/env.tar
+
+RUN /venv/bin/conda-unpack
+
+FROM registry1.dso.mil/ironbank/opensource/python:v3.10 as runtime
+USER root
+
+RUN rpm --import http://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-8
+RUN dnf install -y  https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+
+RUN dnf update -y \
+  && dnf install -y \
+  wget curl less time unzip zip lsof time procps-ng vim-enhanced glibc-langpack-en \
+  && dnf clean all
+
+RUN echo 'LANG="en_US.utf8"' > /etc/locale.conf
+RUN ln -s /usr/lib64/libnsl.so.2 /usr/lib64/libnsl.so.1
+
+ENV CONDAENV /opt/conda/envs/gdal
+COPY --from=build /venv ${CONDAENV}
+
+# Hack to work around problems with Proj.4 in Docker
+ENV PROJ_LIB ${CONDAENV}/share/proj
+ENV PROJ_NETWORK=TRUE
+ENV PATH ${CONDAENV}/bin:$PATH
+ENV DTED_APPLY_PIXEL_IS_POINT=TRUE
+ENV GTIFF_POINT_GEO_IGNORE=TRUE
+ENV GTIFF_REPORT_COMPD_CS=TRUE
+ENV REPORT_COMPD_CS=TRUE
+ENV OAMS_TRADITIONAL_GIS_ORDER=TRUE
+ENV XDG_DATA_HOME=${CONDAENV}/share
+ENV CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE=YES
+ENV CPL_TMPDIR=/tmp
+
+SHELL ["/bin/bash", "-c"]
+RUN source ${CONDAENV}/bin/activate &&  projsync --source-id us_nga && projsync --source-id us_noaa
+
 ARG GID
-RUN addgroup --gid $GID pdalgroup
-RUN adduser --no-create-home --disabled-login pdaluser --gecos "" --uid $UID --gid $GID
+ARG UID
+RUN groupadd --gid $GID gdalgroup
+RUN useradd gdalusr  --uid $UID --gid $GID
+#RUN echo "gdalusr ALL=NOPASSWD: ALL" >> /etc/sudoers
 
-RUN apt-get update && apt-get install -y --fix-missing --no-install-recommends libaio1 unzip  && rm -rf /var/lib/apt/lists/*
-COPY instantclient_12_1 /opt/instantclient/
-ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/opt/instantclient/
-
-ENV ORACLE_HOME /opt/instantclient
-RUN export ORACLE_HOME=/opt/instantclient
-
-RUN git clone https://github.com/pdal/pdal \
-    && cd pdal \
-    && git checkout ${PDAL_VERSION} \
-    && mkdir build \
-    && cd build \
-    && cmake \
-      -DCMAKE_INSTALL_PREFIX=/usr \
-      -DBUILD_PLUGIN_SQLITE=ON \
-      -DBUILD_PLUGIN_OCI=ON \
-      -DBUILD_PLUGIN_NITF=ON \
-      -DBUILD_PLUGIN_P2G=ON \
-      -DBUILD_PLUGIN_PCL=ON \
-      -DBUILD_PLUGIN_PYTHON=ON \
-      -DBUILD_PLUGIN_HEXBIN=ON \
-      -DBUILD_PLUGIN_ATTRIBUTE=ON \
-      -DBUILD_PLUGIN_ICEBRIDGE=ON \
-      -DCMAKE_BUILD_TYPE=Release \
-      -DWITH_GEOTIFF=ON \
-      -DWITH_APPS=ON \
-      -DWITH_LASZIP=ON \
-      -DWITH_LAZPERF=ON  \
-      ..  \
-      && make  \
-      && make install
-
-COPY mkl.zip /opt/.
-RUN unzip /opt/mkl.zip -d /opt
-ENV GEOLIB GeographicLib-1.45
-RUN cd /opt \
-    && wget http://sf.net/projects/geographiclib/files/distrib/${GEOLIB}.tar.gz  \
-    && tar -xzf ${GEOLIB}.tar.gz  \
-    && cd ${GEOLIB}  \
-    && mkdir build \
-    && cd build \
-    && cmake \
-      -DCMAKE_INSTALL_PREFIX=/usr \
-      -DCMAKE_BUILD_TYPE=Release \
-      .. \
-    && make \
-    && make install
-
-COPY sarnoff /opt/sarnoff
-RUN cd /opt \
-    && cd sarnoff \
-    && mkdir build \
-    && cd build \
-    && cmake \
-      -DCMAKE_INSTALL_PREFIX=/usr \
-      -DGeographicLib_LIBRARIES="/usr/lib/libGeographic.so" \
-      -DGeographicLib_DIR="/opt/geographiclib/GeographicLib-1.36" \
-      -DMKL_ROOT_DIR="/opt/mkl" \
-      -DMKL_CORE_LIBRARY="/opt/mkl/lib/intel64/libmkl_core.a" \
-      -DMKL_FFTW_INCLUDE_DIR="/opt/mkl/include/fftw" \
-      -DMKL_GNUTHREAD_LIBRARY="/opt/mkl/lib/intel64/libmkl_gnu_thread.a" \
-      -DMKL_ILP_LIBRARY="/opt/mkl/lib/intel64/libmkl_intel_ilp64.a" \
-      -DMKL_INCLUDE_DIR="/opt/mkl/include" \
-      -DMKL_INTELTHREAD_LIBRARY="/opt/mkl/lib/intel64/libmkl_intel_thread.a" \
-      -DMKL_IOMP5_LIBRARY="/opt/mkl/lib/intel64/libiomp5.so" \
-      -DMKL_LAPACK_LIBRARY="/opt/mkl/lib/intel64/libmkl_lapack95_ilp64.a" \
-      -DMKL_LP_LIBRARY="/opt/mkl/lib/intel64/libmkl_intel_lp64.a" \
-      -DMKL_SEQUENTIAL_LIBRARY="/opt/mkl/lib/intel64/libmkl_sequential.a" \
-      -DPDAL_INCLUDE_DIR="/usr/include" \
-      -DPDAL_LIBRARY="/usr/lib/libpdalcpp.so" \
-      .. \
-    && make \
-    && cp pdal-bareearth/libpdal_plugin_filter_bareearthsri.so /usr/lib/.
-
-RUN cd /opt \
-  && git clone https://github.com/libharu/libharu \
-  && cd libharu \
-  && git checkout RELEASE_2_3_0 \
-  && mkdir build \
-  && cd build \
-  && cmake \
-    -DCMAKE_INSTALL_PREFIX=/usr \
-    .. \
-  && make \
-  && make install
-
-RUN cd /opt \
-  && git clone https://github.com/PDAL/PRC \
-  && cd PRC \
-  && mkdir build \
-  && cd build \
-  && cmake \
-    -DCMAKE_INSTALL_PREFIX=/usr \
-    -DPDAL_DIR=/usr/lib/pdal/cmake \
-    .. \
-  && make \
-  && make install
-
-RUN cd /opt \
-  && git clone https://github.com/CRREL/LASread \
-  && cd LASread \
-  && make
-
-RUN cd /opt \
-  && git clone https://github.com/CRREL/lasvalidate \
-  && cd lasvalidate \
-  && make \
-  && cp bin/lasvalidate /usr/bin/
-
-RUN curl -L https://raw.githubusercontent.com/dockito/vault/master/ONVAULT > /usr/local/bin/ONVAULT && \
-    chmod +x /usr/local/bin/ONVAULT
-
-ENV VAULT_URI="172.17.0.1:14242"
-
-RUN cd /opt \
-  && ONVAULT git clone git@github.com:CRREL/LAStools.git  \
-  && cd LAStools \
-  && cmake \
-    -DCMAKE_INSTALL_PREFIX=/usr \
-    . \
-  && make \
-  && make install \
-  && cp bin/* /usr/bin
-
-RUN rm -rf laszip laz-perf points2grid pcl nitro hexer 3.2.7.tar.gz eigen-eigen-b30b87236a1b
-
-USER pdaluser
+USER gdalusr
+WORKDIR /u02
+ENTRYPOINT source ${CONDAENV}/bin/activate && bash
