@@ -1,4 +1,4 @@
-MAINTAINER Michael Smith [michael.smith@usace.army.mil]
+MAINTAINER Michael Smith [michael.smith.erdc@gmail.com]
 FROM continuumio/miniconda3  as build
 
 RUN apt-get update --fix-missing && \
